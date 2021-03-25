@@ -12,9 +12,17 @@ output:
     theme: "readable"
     highlight: "tango"
     fig_caption: TRUE
+    css: "./source/styles.css"
 ---
 
 ```{js}
+if ($("link[href='/source/styles.css']").length)
+    $('<link href="/source/styles.css" rel="stylesheet">').appendTo("head");
+```
+
+
+```{js}
+
 function myFunction(id) {
   var x = document.getElementById(id);
   if (x.style.display === 'none') {
@@ -25,51 +33,55 @@ function myFunction(id) {
 }
 ```
 
-```{css}
-h1 {background: darkblue;color: white;padding-left: 7px;}
-h3 {color: white; background: #4d88ff;}
-h3.subtitle {color: darkblue; background: white;}
-h4.author {color: black; font-style: italic;}
-details summary span {font-weight: bold;}
-details p {font-family: monospace;}
-.code-folding-btn {display: none;}
+```{r}
+# h1 {background: darkblue;color: white;padding-left: 7px;}
+# h3 {color: white; background: #4d88ff;}
+# h3.subtitle {color: darkblue; background: white;}
+# h4.author {color: black; font-style: italic;}
+# details summary span {font-weight: bold;}
+# details p {font-family: monospace;}
+# .code-folding-btn {display: none;}
 ```
 
-### Setup  
+## Setup  
+
+* Check whether required packages are installed  
+* Clear memory and console  
+* Load packages  
+* Get current script name  
+* Get project folder  
+* Define function(s)  
+
 ```{r CHECK PACKAGES, results="hide"}
-# source("./source_scripts/packages_check.source.R")
+source("./source/check_installed_packages.source.R")
 ```
 
 
 ```{r CLEAN SLATE, results="hide"}
 # Clear memory
 rm(list=setdiff(ls(all=TRUE), c(".Random.seed")))
-# Detach packages
-if (!is.null(names(utils::sessionInfo()[["otherPkgs"]]))) {
-  pacman::p_unload("rmarkdown", negate = TRUE)
-}
 # Clear console
 cat("\014")
 ```
 
-```{r LOAD PACKAGES}
+```{r LOAD PACKAGES, results="hide"}
 library(magrittr)
+library(scales)
 library(dplyr)
 library(mouse430a2.db)
 ```
 
 
-```{r SCRIPT INFO, results="asis"}
+```{r SCRIPT INFO}
 this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
 stopifnot(this.script != "")
 cat("Script:", this.script)
-# wd <- rstudioapi::getActiveDocumentContext()$path %>% dirname
-# cat(this.script)
 ```
 
 ```{r PROJECT DIRECTORY, results="asis", include=FALSE}
 cat("Project folder:", rstudioapi::getActiveProject())
 ```
+
 
 ```{r DT OPTIONS}
 dt.options <- function(x, align="left") {
@@ -81,7 +93,8 @@ dt.options <- function(x, align="left") {
 ```
 
 
-### Load data: CEL files  
+## Load data  
+### Get Affymetrix CEL files  
 ```{r DATA FOLDERS}
 folder.cel <- "~/_Data/Aag/Aag_KO_Liver_Project_2/microarray/microarray_input/cel_files_paper"
 stopifnot(all(file.exists(folder.cel)))
@@ -97,7 +110,7 @@ details::details(paste("<tt>", paste(sort(basename(file.paths)), collapse="<br\n
                  lang=NULL, summary="Show filenames")
 ```
 
-
+### Read CEL files  
 ```{r READ CEL FILES, results="asis"}
 stopifnot(all(file.exists(file.paths)))
 ab <- affy::ReadAffy(filenames=file.paths)
@@ -114,8 +127,8 @@ rm(file.paths, folder.cel)
 ```
 
 
-### Add phenodata to affybatch
-#### Define pData:  
+## Add phenodata to affybatch
+### Define pData  
 ```{r}
 pd <- data.frame(sample.name = Biobase::sampleNames(ab),
                  Genotype=NA,
@@ -131,7 +144,7 @@ pd %>%
   DT::datatable(., options = dt.options(.), rownames = F)
 ```
 
-#### Define varLabels:  
+### Define varLabels  
 ```{r}
 v.labels <- list(Genotype = "Mpg genotype",
                  Replicate = "1 to 3 arbitrary numbering",
@@ -142,7 +155,7 @@ metaData %>%
   DT::datatable(., options = dt.options(.), rownames = F)
 ```
 
-#### Compose phenoData:  
+### Compose phenoData:  
 ```{r}
 phenoData <- new("AnnotatedDataFrame",
                  data=pd, varMetadata=metaData)
@@ -161,22 +174,26 @@ rm(v.labels, metaData, phenoData)
 ```
 
 
-#### Checking: print pData
+### Checking: print pData
 ```{r}
 Biobase::pData(ab) %>% 
   tibble::rownames_to_column("Row label") %>% 
   DT::datatable(., options = dt.options(.), rownames = F)
 ```
-
+### Save affybatch  
 ```{r SAVE AFFYBATCH}
-out.file.affybatch <- paste0("./output_data/", this.script, ".affybatch.RDS")
+if (!file.exists("data")) {
+  dir.create("data")
+}
+out.file.affybatch <- paste0("./data/", this.script, ".affybatch.RDS")
 saveRDS(ab, file=out.file.affybatch, compress=T)
 cat("Saved:", out.file.affybatch)
 rm(out.file.affybatch)
 ```
 
-### Generate expression set  
-Following instructions in affy vignette (see Info/affy_vignette_2017_04_24.pdf). "The function expresso performs the steps background correction, normalization, probe specic correction, and summary value computation." ([Gautier et al., 2004](https://www.ncbi.nlm.nih.gov/pubmed/14960456)).    
+## Generate expression set  
+Following instructions in affy vignette (see Info/affy_vignette_2017_04_24.pdf). *"The function expresso performs the steps background correction, normalization, probe specic correction, and summary value computation."* ([Gautier et al., 2004](https://www.ncbi.nlm.nih.gov/pubmed/14960456)).    
+
 ```{r GENERATE EXPRESSION SET, results="hide"}
 eset <- affy::expresso(ab,
                        normalize.method="qspline",
@@ -185,42 +202,46 @@ eset <- affy::expresso(ab,
                        summary.method="liwong",
                        verbose = FALSE)
 ```
-#### Save eset  
+
+### Save eset  
 ```{r SAVING ESET, results="asis"}
-out.file.eset <- paste0("./output_data/", this.script, ".eset.RDS")  
+out.file.eset <- paste0("./data/", this.script, ".eset.RDS")  
 saveRDS(eset, file=out.file.eset, compress=TRUE)
 cat("Saved:", out.file.eset)
 rm(out.file.eset)
 ```
 
-### Boxplot of log2 transformed data
+## Boxplot of log2 transformed data
 ```{r BOXPLOT ESET, message=FALSE, warning=FALSE}
 op <- par()
 par(mar=c(7,4,0,2)) # default is (5,4,4,2)
-eset %>% Biobase::exprs(.) %>% log2(.) %>% boxplot(., las=2)
+eset %>% Biobase::exprs(.) %>% log2(.) %>%
+  boxplot(., las=2, col=rep(RColorBrewer::brewer.pal(4,"Set2"), each=3))
 par(op)
+rm(op)
 ```
 
-### Save expression set  
-#### Print first six rows:  
+## Save expression set  
+### Print first six rows:  
 ```{r}
-matrix.df <- eset %>% Biobase::exprs(.) %>% log2(.) %>% as.data.frame %>% tibble::rownames_to_column("ID_REF")
-head(matrix.df) %>% 
+expr.df <- eset %>% Biobase::exprs(.) %>% log2(.) %>% as.data.frame %>% tibble::rownames_to_column("ID_REF")
+head(expr.df) %>% 
   DT::datatable(., options = dt.options(.), rownames = F) %>% 
-  DT::formatRound(setdiff(names(matrix.df), "ID_REF"), digits=3)
+  DT::formatRound(setdiff(names(expr.df), "ID_REF"), digits=3)
 ```
 
-#### Save matrix with all replicates:  
+### Save expression table with all replicates:  
 ```{r SAVING MATRIX, results="asis"}
-out.file.matrix <- paste0("./output_data/", this.script, ".matrix.txt")
-write.table(matrix.df, file=out.file.matrix, sep="\t", col.names = T, row.names = F)
-cat("Saved:", out.file.matrix)
-rm(out.file.matrix)
+out.file.expr.all <- paste0("./data/", this.script, ".expr_all.txt")
+write.table(expr.df, file=out.file.expr.all, sep="\t", col.names = T, row.names = F)
+cat("Saved:", out.file.expr.all)
+rm(out.file.expr.all)
 ```
 
-#### Save matrix with averages:  
+## Calculate average expression values  
+### Print first six rows  
 ```{r}
-matrix.df.means <- matrix.df %>% 
+expr.df.means <- expr.df %>% 
   dplyr::rowwise(ID_REF) %>% 
   dplyr::mutate(Wt_Ctrl = mean(c_across(starts_with("WT_Ctrl"))),
          Wt_MMS = mean(c_across(starts_with("WT_MMS"))),
@@ -231,35 +252,52 @@ matrix.df.means <- matrix.df %>%
   dplyr::select(-starts_with("WT_MMS", ignore.case=F)) %>% 
   dplyr::select(-starts_with("KO_Ctrl", ignore.case=F)) %>% 
   dplyr::select(-starts_with("KO_MMS", ignore.case=F))
-head(matrix.df.means)
+head(expr.df.means) %>% 
+  DT::datatable(., options = dt.options(.), rownames = F) %>% 
+  DT::formatRound(setdiff(names(expr.df.means), "ID_REF"), digits=3)
 ```
 
 
-#### Gene annotations  
+### Add gene annotations  
 ```{r results="hide"}
 anno <- AnnotationDbi::select(mouse430a2.db, row.names(eset), c("SYMBOL", "GENENAME"), "PROBEID")
 head(anno)
 ```
+
 ```{r}
-matrix.df.means.anno <- merge(x=anno, y=matrix.df.means,
+expr.df.means.anno <- merge(x=anno, y=expr.df.means,
                               by.x="PROBEID",
                               by.y="ID_REF", all=TRUE)
-head(matrix.df.means.anno)
+rm(anno)
 ```
 
-
-
+### Print first six rows  
 ```{r}
-out.file.mx.means <- paste0("./output_data/", this.script, ".mx_means.txt")
-write.table(matrix.df.means.anno, file=out.file.mx.means, sep="\t", row.names=F, col.names=T)
-cat("Saved:", out.file.mx.means)
+head(expr.df.means.anno)
+```
+***Note that probe IDs and gene symbols are no longer unique after adding gene annotations!***
+```{r}
+cat("Number of duplicated probe IDs: ", comma(sum(duplicated(expr.df.means.anno$PROBEID))), "\n",
+    "Number of duplicated gene symbols: ", comma(sum(duplicated(expr.df.means.anno$SYMBOL))), "\n",
+    "Number of missing probe IDs: ", comma(sum(is.na(expr.df.means.anno$PROBEID))), "\n",
+    "Number of missing gene symbols: ", comma(sum(is.na(expr.df.means.anno$SYMBOL))),
+    sep="")
 ```
 
 
-### Session info  
+### Save average expression data  
+```{r}
+out.file.expr.all <- paste0("./data/", this.script, ".expr_mean.txt")
+write.table(expr.df.means.anno, file=out.file.expr.all, sep="\t", row.names=FALSE, col.names=TRUE)
+cat("Saved:", out.file.expr.all)
+rm(out.file.expr.all)
+```
 
-<button class="button" onclick="myFunction('DIV_5')">Show/hide session info</button>
-<div id="DIV_5" class="div_default_hide">
+
+## Session info  
+
+<button class="button" onclick="myFunction('DIV_1')">Show/hide session info</button>
+<div id="DIV_1" class="div_default_hide">
 
 ```{r SESSION INFO DATE, results="asis"}
 cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
@@ -269,11 +307,11 @@ cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
 devtools::session_info()
 ```
 </div>
-  
+
 ```{js}
-var divsToHide = document.getElementsByClassName("div_default_hide");
-for(var i = 0; i < divsToHide.length; i++)
-{
-  divsToHide[i].style.display = 'none';
-}
+<!-- var divsToHide = document.getElementsByClassName("div_default_hide"); -->
+<!-- for(var i = 0; i < divsToHide.length; i++) -->
+<!-- { -->
+  <!-- divsToHide[i].style.display = 'none'; -->
+<!-- } -->
 ```

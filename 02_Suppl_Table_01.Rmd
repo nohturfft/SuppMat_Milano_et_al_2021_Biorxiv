@@ -1,0 +1,349 @@
+---
+title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
+subtitle: "Supplemtal Table 1"
+author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+output:
+  html_notebook:
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 3
+    code_folding: "hide"
+    number_sections: FALSE
+    theme: "readable"
+    highlight: "tango"
+    fig_caption: TRUE
+    css: "./source/styles.css"
+---
+
+```{js}
+function myFunction(id) {
+  var x = document.getElementById(id);
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {
+    x.style.display = 'none';
+  }
+}
+```
+
+
+## Setup  
+
+* Clear memory and console  
+* Load packages  
+* Get current script name  
+* Get project folder  
+* Define function(s)  
+
+
+```{r CLEAN SLATE, results="hide"}
+# Clear memory
+rm(list=setdiff(ls(all=TRUE), c(".Random.seed")))
+# Clear console
+cat("\014")
+```
+
+```{r LOAD PACKAGES, results="hide"}
+library(magrittr)
+library(dplyr)
+library(AnnotationDbi)
+library(mouse430a2.db)
+```
+
+
+```{r, SCRIPT INFO}
+this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
+stopifnot(this.script != "")
+cat("Script:", this.script)
+```
+
+```{r PROJECT DIRECTORY, results="asis", results="hide"}
+cat("Project folder:", rstudioapi::getActiveProject())
+```
+
+
+```{r DT OPTIONS}
+dt.options <- function(x, align="left") {
+  align <- paste0("dt-", align)
+  dom.value <- ifelse(nrow(x) > 5, "tip", "t")
+  list(dom=dom.value,
+       columnDefs = list(list(className = align,
+       pageLength = 10,
+       targets = seq_len(ncol(x))-1)))
+}
+```
+
+## Input data  
+Script expects that input data have been generated in previous script.  
+
+### Load expression set  
+```{r LOAD ESET}
+# list.files("data")
+eset.file <- "./data/01_Raw_Data_Processing.Rmd.eset.RDS"
+stopifnot(file.exists(eset.file))
+eset <- readRDS(eset.file)
+cat("Read eset from:", eset.file)
+rm(eset.file)
+```
+
+```{r SIZE ESET, results="asis"}
+cat("Class: <b>", class(eset), "</b><br>\n",
+    "Size: <b>",
+    utils:::format.object_size(pryr::object_size(eset), "auto"),
+    "</b>\n", sep="") # 6.3 Mb
+```
+
+### Load gene annotations  
+```{r results="hide", message=FALSE, warning=FALSE}
+anno <- AnnotationDbi::select(mouse430a2.db, row.names(eset), c("SYMBOL", "GENENAME"), "PROBEID")
+head(anno)
+```
+
+## Limma analysis  
+### Sample table  
+```{r SAMPLE TABLE}
+sample.table <- Biobase::pData(eset)
+sample.table
+```
+
+### Experimental design  
+```{r EXPERIMENTAL DESIGN, results="hide"}
+TS <- paste(sample.table$Genotype, sample.table$Treatment, sep=".")
+TS <- factor(TS, levels=c("wt.ctrl","wt.mms","ko.ctrl","ko.mms"))
+TS
+```
+
+<button class="button" onclick="myFunction('DIV_1')">Show/hide model matrix</button>
+<div id="DIV_1" class="div_default_hide">
+```{r MODEL MATRIX, results="asis"}
+design <- model.matrix(~0+TS)
+colnames(design) <- levels(TS)
+design
+```
+</div>
+
+### Fitting linear model  
+```{r LINEAR MODEL}
+fit <- Biobase::exprs(eset) %>% 
+  log2(.) %>% 
+  limma::lmFit(., design)
+cat("Object class:\n")
+class(fit)
+```
+
+
+### Contrast matrix  
+```{r}
+cont.matrix <- limma::makeContrasts(
+     ko.ctrl.vs.wt.ctrl = ko.ctrl - wt.ctrl,
+     ko.mms.vs.wt.mms   = ko.mms - wt.mms,
+     wt.mms.vs.wt.ctrl  = wt.mms - wt.ctrl,
+     ko.mms.vs.ko.ctrl  = ko.mms - ko.ctrl,
+     levels=design)
+cont.matrix
+```
+
+
+### Statistics for Differential Expression  
+
+```{r FIT2, results="asis"}
+fit2 <- limma::contrasts.fit(fit, cont.matrix)
+fit2 <- limma::eBayes(fit2)
+details::details(fit2, lang=NULL, summary="Show results of limma::eBayes")
+```
+
+## Number of differentially expressed genes: 'global' versus 'separate' methods  
+The `limma::decideTests` function identifies "which genes are significantly differentially expressed for each contrast from a fit object containing p-values and test statistics."  
+
+"The setting method="separate" is equivalent to using topTable separately for each coefficient in the linear model fit, and will identify the same probes as significantly differentially expressed if adjust.method is the same. method="global" will treat the entire matrix of t-statistics as a single vector of unrelated tests." [...] 
+
+### Regulation parameters (cutoffs log2FC & p.value):  
+```{r P_CUTOFF, results="asis"}
+p.cutoff <- 0.05
+cat("Maximum p value:<b>", p.cutoff, "</b>")
+```
+
+```{r LOGFC_CUTOFF, results="asis"}
+fc.min <- 1.75
+lfc.min <- log2(fc.min)
+cat("Minimum log2FC:<b>", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)), "</b>")
+```
+
+### DecideTests  
+```{r}
+test.results <- limma::decideTests(fit2, p.value = p.cutoff, lfc=lfc.min,
+                                  method = "separate", adjust.method="fdr")
+```
+
+
+```{r}
+summary(test.results) %>% unclass %>% as.data.frame %>% .[-2,] %>% 
+  rbind(., colSums(.)) %>% magrittr::set_rownames(c("Down", "Up", "Total"))
+```
+
+
+
+
+## Get differentially regulated probes  
+```{r}
+mx <- unclass(test.results)
+test.results.probes <- vector("list", ncol(mx)) %>% 
+  set_names(colnames(mx))
+
+get.probes <- function(mtx, colm, where) {
+  where <- tolower(where)
+  stopifnot(colm %in% colnames(mtx))
+  stopifnot(where %in% c("up", "down"))
+  where2 <- ifelse(where == "up", 1, -1)
+  a <- mtx[,colm]
+  b <- a[a == where2]
+  c <- names(b)
+  d <- sort(c)
+  d
+}
+
+test.results.probes <- lapply(seq_len(ncol(mx)), function(i) {
+  probes.down <- get.probes(mx, colnames(mx)[i], "down")
+  probes.up <- get.probes(mx, colnames(mx)[i], "up")
+  probes.total <- sort(union(probes.up, probes.down))
+  list(down=probes.down, up=probes.up, total=probes.total)
+}) %>% 
+  set_names(colnames(mx))
+
+str(test.results.probes)
+```
+
+
+### Save probe lists  
+```{r}
+out.file.probe.lists <- paste0("./data/", this.script, ".DEprobes.RDS")
+saveRDS(object=test.results.probes, file=out.file.probe.lists)
+cat("Saved:", out.file.probe.lists)
+rm(out.file.probe.lists)
+```
+
+
+## Get differentially regulated gene symbols  
+```{r}
+get.gene.symbols <- function(probe.ids) {
+  stopifnot(all(probe.ids %in% anno$PROBEID))
+  gs <- anno %>% 
+    filter(PROBEID %in% probe.ids) %>% 
+    tidyr::drop_na(.) %>% 
+    .$SYMBOL %>% unique %>% sort
+  gs
+}
+```
+
+
+```{r}
+test.results.genes <- lapply(test.results.probes, function(probs) {
+  lapply(probs, get.gene.symbols)
+})
+str(test.results.genes)
+```
+
+
+```{r}
+lapply(test.results.genes, function(gs) {
+  sapply(gs, length) %>% as.matrix
+}) %>% do.call(cbind, .) %>% 
+  set_colnames(names(test.results.genes))
+```
+
+#### Save gene lists  
+```{r}
+out.file.gene.lists <- paste0("./data/", this.script, ".DEgenes.RDS")
+saveRDS(object=test.results.genes, file=out.file.gene.lists)
+cat("Saved:", out.file.gene.lists)
+rm(out.file.gene.lists)
+```
+
+
+## Toptables  
+```
+NOTE: After annotating the toptables with gene symbols, the number of differentially regulated items increases because some probeset IDs map to several gene symbols.
+```
+
+### Annotate probe sets with gene symbol and gene title:  
+```{r}
+# 'anno' defined early in script
+add.anno <- function(dafra) {
+  first.three.columns <- c("PROBEID", "SYMBOL", "GENENAME")
+  remaining.columns <- setdiff(names(dafra), first.three.columns)
+  cols <- c(first.three.columns, remaining.columns)
+  dafra <- dafra %>% tibble::rownames_to_column("PROBEID") %>% 
+    dplyr::left_join(anno, by="PROBEID") %>% 
+    dplyr::select(cols) %>% 
+    dplyr::arrange(P.Value) %>% 
+    magrittr::set_rownames(NULL)
+}
+```
+
+### Generate toptables  
+```{r}
+# coefs <- c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms")
+coefs <- colnames(cont.matrix)
+tt <- lapply(coefs, function(coeff) {
+  limma::topTable(fit=fit2, number=Inf, coef=coeff) %>% 
+    add.anno(.) %>%
+    dplyr::arrange(desc(logFC))
+}) %>% 
+  magrittr::set_names(coefs)
+```
+
+```
+NOTE: Many probe IDs map to several gene symbols:  
+```
+
+```{r results="asis"}
+cat("Rows in eset:", scales::comma(nrow(eset)))
+```
+
+```{r}
+sapply(tt, nrow) %>% scales::comma(.) %>%
+  as.data.frame(., stringsAsFactors=FALSE) %>% 
+  tibble::rownames_to_column(.) %>% 
+  set_colnames(c("Contrast", "Rows"))
+```
+
+### Save toptables in Excel file  
+```{r results="asis"}
+xlsx.file <- "Supplemental_Table_1.xlsx"
+wb <- openxlsx::createWorkbook()
+openxlsx::modifyBaseFont(wb, fontSize = 12, fontName = "Arial")
+tab.colors <- c("paleturquoise4", "darkseagreen", "palevioletred", "bisque3")
+for (i in seq_along(tt)) {
+  sheet.name <- names(tt)[i]
+  openxlsx::addWorksheet(wb=wb, sheetName=sheet.name, gridLines = FALSE, tabColour=tab.colors[i])
+  openxlsx::setColWidths(wb=wb, sheet=sheet.name, cols = 1, widths = "auto")
+  openxlsx::writeDataTable(wb = wb, sheet=sheet.name, x = tt[[i]],
+                           colNames = TRUE)
+}
+openxlsx::saveWorkbook(wb, xlsx.file, overwrite = TRUE)
+cat("Saved:", basename(xlsx.file))
+rm(xlsx.file, wb, tab.colors, i, sheet.name)
+```
+
+
+## Session info  
+
+<button class="button" onclick="myFunction('DIV_2')">Show/hide session info</button>
+<div id="DIV_2" class="div_default_hide">
+
+```{r SESSION INFO DATE, results="asis"}
+cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
+```
+
+```{r print_session_info, R.options=list(width=70)}
+devtools::session_info()
+```
+</div>
+  
+```{js}
+var divsToHide = document.getElementsByClassName("div_default_hide");
+for(var i = 0; i < divsToHide.length; i++)
+{
+  divsToHide[i].style.display = 'none';
+}
+```

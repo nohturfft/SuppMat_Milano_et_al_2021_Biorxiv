@@ -1,0 +1,37 @@
+h1 {background: purple;color: white;padding: 7px;font-size: large;border-radius: 5px;}
+h2 {color: purple;font-weight: bold;border:1px solid purple;border-radius: 5px;padding: 10px;font-size: medium;}
+h3 {color: purple;font-size: medium;}
+h4 {color: darkblue;}
+hr {border: 0;
+    height: 5px;
+    color:purple;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));}
+    
+.comment_box {
+  background:#ffe6ff;
+  border:1px solid darkgrey;
+  border-radius: 5px;
+  padding:10px;
+  margin-bottom: 25px;
+}
+
+.datatables {
+  border:1px solid darkgrey;
+  border-radius: 5px;
+  padding-top:10px;
+  padding-bottom:10px;
+  padding-left:5px;
+  padding-right:5px;
+}
+
+.datatables caption {
+  color: black;
+  font-weight: bold;
+  font-size: large;
+  color: darkblue;
+}
+
+code {
+  color: black;
+  background-color: lightgrey;
+}

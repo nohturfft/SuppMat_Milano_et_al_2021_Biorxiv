@@ -1,0 +1,279 @@
+---
+title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
+subtitle: "Figure 1: Preparing expression data"
+author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+output:
+  html_notebook:
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 3
+    code_folding: "hide"
+    number_sections: FALSE
+    theme: "readable"
+    highlight: "tango"
+    fig_caption: TRUE
+---
+
+```{js}
+function myFunction(id) {
+  var x = document.getElementById(id);
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {
+    x.style.display = 'none';
+  }
+}
+```
+
+```{css}
+h1 {background: darkblue;color: white;padding-left: 7px;}
+h3 {color: white; background: #4d88ff;}
+h3.subtitle {color: darkblue; background: white;}
+h4.author {color: black; font-style: italic;}
+details summary span {font-weight: bold;}
+details p {font-family: monospace;}
+.code-folding-btn {display: none;}
+```
+
+### Setup  
+```{r CHECK PACKAGES, results="hide"}
+# source("./source_scripts/packages_check.source.R")
+```
+
+
+```{r CLEAN SLATE, results="hide"}
+# Clear memory
+rm(list=setdiff(ls(all=TRUE), c(".Random.seed")))
+# Detach packages
+if (!is.null(names(utils::sessionInfo()[["otherPkgs"]]))) {
+  pacman::p_unload("rmarkdown", negate = TRUE)
+}
+# Clear console
+cat("\014")
+```
+
+```{r LOAD PACKAGES}
+library(magrittr)
+library(dplyr)
+library(mouse430a2.db)
+```
+
+
+```{r SCRIPT INFO, results="asis"}
+this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
+stopifnot(this.script != "")
+cat("Script:", this.script)
+# wd <- rstudioapi::getActiveDocumentContext()$path %>% dirname
+# cat(this.script)
+```
+
+```{r PROJECT DIRECTORY, results="asis", include=FALSE}
+cat("Project folder:", rstudioapi::getActiveProject())
+```
+
+```{r DT OPTIONS}
+dt.options <- function(x, align="left") {
+  align <- paste0("dt-", align)
+  list(dom="t",
+       columnDefs = list(list(className = align,
+       targets = seq_len(ncol(x))-1)))
+}
+```
+
+
+### Load data: CEL files  
+```{r DATA FOLDERS}
+folder.cel <- "~/_Data/Aag/Aag_KO_Liver_Project_2/microarray/microarray_input/cel_files_paper"
+stopifnot(all(file.exists(folder.cel)))
+```
+
+```{r CEL DATA FOLDER, results="asis"}
+details::details(paste0("<tt>", folder.cel, "</tt>"), lang=NULL, summary="Show data folder")
+```
+
+```{r GET NAMES OF CEL FILES, results="asis"}
+file.paths <- list.files(path=folder.cel, pattern=".*\\.CEL", full.names=TRUE)
+details::details(paste("<tt>", paste(sort(basename(file.paths)), collapse="<br\n>"), "</tt>", sep="\n"),
+                 lang=NULL, summary="Show filenames")
+```
+
+
+```{r READ CEL FILES, results="asis"}
+stopifnot(all(file.exists(file.paths)))
+ab <- affy::ReadAffy(filenames=file.paths)
+Biobase::sampleNames(ab) <- basename(file.paths)
+cat("Size of ", class(ab), ": <b>", utils:::format.object_size(pryr::object_size(ab), "auto"), "</b>\n", sep="") # 81.8 Mb
+```
+
+```{r PRINT AFFYBATCH INFO, warning=FALSE}
+print(ab)
+```
+
+```{r REMOVE OBSOLETE VARIABLES}
+rm(file.paths, folder.cel)
+```
+
+
+### Add phenodata to affybatch
+#### Define pData:  
+```{r}
+pd <- data.frame(sample.name = Biobase::sampleNames(ab),
+                 Genotype=NA,
+                 stringsAsFactors = F)
+pd$Genotype <- ifelse(grepl("WT", pd$sample.name, ignore.case=T), "wt", "ko")
+stopifnot(all(complete.cases(pd)))
+pd$Replicate <- stringr::str_extract(pd$sample.name, "[0-9].CEL$") %>% stringr::str_extract(., "^[0-9]")
+pd$Treatment <- ifelse(grepl("Ctrl", pd$sample.name, ignore.case=T), "ctrl", "mms")
+rownames(pd) <- pd$sample.name %>% sub("^AA[0-9]{3}_", "", .) %>% sub("^Mpg", "", .) %>% sub(".CEL$", "", .)
+pd <- pd %>% dplyr::select(-sample.name)
+pd %>% 
+  tibble::rownames_to_column("Row Label") %>% 
+  DT::datatable(., options = dt.options(.), rownames = F)
+```
+
+#### Define varLabels:  
+```{r}
+v.labels <- list(Genotype = "Mpg genotype",
+                 Replicate = "1 to 3 arbitrary numbering",
+                 Treatment = "Control or 6 hours MMS") %>% unlist
+metaData <- data.frame(labelDescription=v.labels)
+metaData %>% 
+  tibble::rownames_to_column("Row Label") %>% 
+  DT::datatable(., options = dt.options(.), rownames = F)
+```
+
+#### Compose phenoData:  
+```{r}
+phenoData <- new("AnnotatedDataFrame",
+                 data=pd, varMetadata=metaData)
+Biobase::phenoData(ab) <- phenoData
+# class(Biobase::phenoData(ab)) # "AnnotatedDataFrame"
+Biobase::phenoData(ab)
+```
+
+```{r}
+Biobase::protocolData(ab) <- Biobase::phenoData(ab)
+```
+
+
+```{r}
+rm(v.labels, metaData, phenoData)
+```
+
+
+#### Checking: print pData
+```{r}
+Biobase::pData(ab) %>% 
+  tibble::rownames_to_column("Row label") %>% 
+  DT::datatable(., options = dt.options(.), rownames = F)
+```
+
+```{r SAVE AFFYBATCH}
+out.file.affybatch <- paste0("./output_data/", this.script, ".affybatch.RDS")
+saveRDS(ab, file=out.file.affybatch, compress=T)
+cat("Saved:", out.file.affybatch)
+rm(out.file.affybatch)
+```
+
+### Generate expression set  
+Following instructions in affy vignette (see Info/affy_vignette_2017_04_24.pdf). "The function expresso performs the steps background correction, normalization, probe specic correction, and summary value computation." ([Gautier et al., 2004](https://www.ncbi.nlm.nih.gov/pubmed/14960456)).    
+```{r GENERATE EXPRESSION SET, results="hide"}
+eset <- affy::expresso(ab,
+                       normalize.method="qspline",
+                       bgcorrect.method="rma",
+                       pmcorrect.method="pmonly",
+                       summary.method="liwong",
+                       verbose = FALSE)
+```
+#### Save eset  
+```{r SAVING ESET, results="asis"}
+out.file.eset <- paste0("./output_data/", this.script, ".eset.RDS")  
+saveRDS(eset, file=out.file.eset, compress=TRUE)
+cat("Saved:", out.file.eset)
+rm(out.file.eset)
+```
+
+### Boxplot of log2 transformed data
+```{r BOXPLOT ESET, message=FALSE, warning=FALSE}
+op <- par()
+par(mar=c(7,4,0,2)) # default is (5,4,4,2)
+eset %>% Biobase::exprs(.) %>% log2(.) %>% boxplot(., las=2)
+par(op)
+```
+
+### Save expression set  
+#### Print first six rows:  
+```{r}
+matrix.df <- eset %>% Biobase::exprs(.) %>% log2(.) %>% as.data.frame %>% tibble::rownames_to_column("ID_REF")
+head(matrix.df) %>% 
+  DT::datatable(., options = dt.options(.), rownames = F) %>% 
+  DT::formatRound(setdiff(names(matrix.df), "ID_REF"), digits=3)
+```
+
+#### Save matrix with all replicates:  
+```{r SAVING MATRIX, results="asis"}
+out.file.matrix <- paste0("./output_data/", this.script, ".matrix.txt")
+write.table(matrix.df, file=out.file.matrix, sep="\t", col.names = T, row.names = F)
+cat("Saved:", out.file.matrix)
+rm(out.file.matrix)
+```
+
+#### Save matrix with averages:  
+```{r}
+matrix.df.means <- matrix.df %>% 
+  dplyr::rowwise(ID_REF) %>% 
+  dplyr::mutate(Wt_Ctrl = mean(c_across(starts_with("WT_Ctrl"))),
+         Wt_MMS = mean(c_across(starts_with("WT_MMS"))),
+         Ko_Ctrl = mean(c_across(starts_with("KO_Ctrl"))),
+         Ko_MMS = mean(c_across(starts_with("KO_MMS")))) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::select(-starts_with("WT_Ctrl", ignore.case=F)) %>%
+  dplyr::select(-starts_with("WT_MMS", ignore.case=F)) %>% 
+  dplyr::select(-starts_with("KO_Ctrl", ignore.case=F)) %>% 
+  dplyr::select(-starts_with("KO_MMS", ignore.case=F))
+head(matrix.df.means)
+```
+
+
+#### Gene annotations  
+```{r results="hide"}
+anno <- AnnotationDbi::select(mouse430a2.db, row.names(eset), c("SYMBOL", "GENENAME"), "PROBEID")
+head(anno)
+```
+```{r}
+matrix.df.means.anno <- merge(x=anno, y=matrix.df.means,
+                              by.x="PROBEID",
+                              by.y="ID_REF", all=TRUE)
+head(matrix.df.means.anno)
+```
+
+
+
+```{r}
+out.file.mx.means <- paste0("./output_data/", this.script, ".mx_means.txt")
+write.table(matrix.df.means.anno, file=out.file.mx.means, sep="\t", row.names=F, col.names=T)
+cat("Saved:", out.file.mx.means)
+```
+
+
+### Session info  
+
+<button class="button" onclick="myFunction('DIV_5')">Show/hide session info</button>
+<div id="DIV_5" class="div_default_hide">
+
+```{r SESSION INFO DATE, results="asis"}
+cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
+```
+
+```{r print_session_info, R.options=list(width=70)}
+devtools::session_info()
+```
+</div>
+  
+```{js}
+var divsToHide = document.getElementsByClassName("div_default_hide");
+for(var i = 0; i < divsToHide.length; i++)
+{
+  divsToHide[i].style.display = 'none';
+}
+```

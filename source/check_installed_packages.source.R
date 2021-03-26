@@ -12,7 +12,9 @@ required_cran_packages <- c(
   "RColorBrewer",
   "scales",
   "devtools",
-  "tibble"
+  "tibble",
+  "gridExtra",
+  "data.table"
 )
 
 required_bioc_packages <- c(

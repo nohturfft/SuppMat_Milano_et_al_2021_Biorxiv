@@ -16,12 +16,6 @@ output:
 ---
 
 ```{js}
-if ($("link[href='/source/styles.css']").length)
-    $('<link href="/source/styles.css" rel="stylesheet">').appendTo("head");
-```
-
-
-```{js}
 
 function myFunction(id) {
   var x = document.getElementById(id);
@@ -107,7 +101,7 @@ details::details(paste0("<tt>", folder.cel, "</tt>"), lang=NULL, summary="Show d
 ```{r GET NAMES OF CEL FILES, results="asis"}
 file.paths <- list.files(path=folder.cel, pattern=".*\\.CEL", full.names=TRUE)
 details::details(paste("<tt>", paste(sort(basename(file.paths)), collapse="<br\n>"), "</tt>", sep="\n"),
-                 lang=NULL, summary="Show filenames")
+                 lang=NULL, summary="Show CEL filenames")
 ```
 
 ### Read CEL files  
@@ -211,7 +205,7 @@ cat("Saved:", out.file.eset)
 rm(out.file.eset)
 ```
 
-## Boxplot of log2 transformed data
+### Boxplot of log2 transformed data
 ```{r BOXPLOT ESET, message=FALSE, warning=FALSE}
 op <- par()
 par(mar=c(7,4,0,2)) # default is (5,4,4,2)
@@ -221,17 +215,18 @@ par(op)
 rm(op)
 ```
 
-## Save expression set  
-### Print first six rows:  
-```{r}
+```{r results="hide"}
 expr.df <- eset %>% Biobase::exprs(.) %>% log2(.) %>% as.data.frame %>% tibble::rownames_to_column("ID_REF")
-head(expr.df) %>% 
-  DT::datatable(., options = dt.options(.), rownames = F) %>% 
-  DT::formatRound(setdiff(names(expr.df), "ID_REF"), digits=3)
 ```
 
+```{r results="hide"}
+# Print first 6 rows:
+head(expr.df)
+```
+
+
 ### Save expression table with all replicates:  
-```{r SAVING MATRIX, results="asis"}
+```{r SAVING MATRIX}
 out.file.expr.all <- paste0("./data/", this.script, ".expr_all.txt")
 write.table(expr.df, file=out.file.expr.all, sep="\t", col.names = T, row.names = F)
 cat("Saved:", out.file.expr.all)

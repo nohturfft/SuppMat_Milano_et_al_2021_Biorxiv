@@ -1,0 +1,165 @@
+---
+title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
+subtitle: "Figure 1 A and B"
+author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+output:
+  html_notebook:
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 3
+    code_folding: "hide"
+    number_sections: FALSE
+    theme: "readable"
+    highlight: "tango"
+    fig_caption: TRUE
+    css: "./source/styles.css"
+---
+
+```{js ShowHide Session Info}
+function myFunction(id) {
+  var x = document.getElementById(id);
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {
+    x.style.display = 'none';
+  }
+}
+```
+
+## Setup  
+
+* Clear memory and console  
+* Load packages  
+* Get current script name  
+
+
+```{r CLEAN SLATE, results="hide"}
+# Clear memory
+rm(list=setdiff(ls(all=TRUE), c(".Random.seed")))
+# Clear console
+cat("\014")
+```
+
+```{r LOAD PACKAGES, results="hide"}
+library(magrittr)
+library(dplyr)
+library(limma)
+```
+
+
+```{r SCRIPT INFO, results="asis"}
+this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
+stopifnot(this.script != "")
+cat("Script:", this.script)
+```
+
+
+## Load differential expression statistics  
+```{r LOAD FIT, results="asis"}
+fit2.file <- "./data/02_Suppl_Table_01.Rmd.fit.RDS"
+stopifnot(file.exists(fit2.file))
+cat("Read fit2 from:", fit2.file)
+fit2 <- readRDS(fit2.file)
+rm(fit2.file)
+```
+
+```{r SIZE ESET, results="asis"}
+cat("Object class: ", class(fit2)[1], "<br>\n",
+    "Size: ", utils:::format.object_size(pryr::object_size(fit2), "auto"),
+    "</b>\n", sep="") # 7.4 Mb
+```
+
+
+## Multiple testing  
+### Regulation parameters (cutoffs FC & p.value):  
+```{r P_CUTOFF, results="asis"}
+p.cutoff <- 0.05
+cat("Maximum p value:<b>", p.cutoff, "</b>")
+```
+
+```{r LOGFC_CUTOFF, results="asis"}
+fc.min <- 1.75
+lfc.min <- log2(fc.min)
+cat("Minimum log2FC:<b>", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)), "</b>")
+```
+
+### DecideTests  
+```{r}
+test.results <- limma::decideTests(fit2, p.value = p.cutoff, lfc=lfc.min,
+                                  method = "separate", adjust.method="fdr")
+```
+
+
+```{r}
+summary(test.results) %>% unclass %>% as.data.frame %>% .[-2,] %>% 
+  rbind(., colSums(.)) %>% magrittr::set_rownames(c("Down", "Up", "Total"))
+```
+
+
+## Venn diagrams  
+```{r}
+plot.venn <- function(test_results, the.contrasts, the.title) {
+  limma::vennDiagram(test_results[,the.contrasts],
+                   include=c("up","down"), counts.col = c("#1503a1", "#a85c00"),
+                   cex=c(1.2,1,1), mar=c(0,0,1,0), oma=c(0,0,0,0))
+  mtext(the.title, side=3, line=-3, cex=1, col="black", font=2) 
+}
+```
+
+### Panel A: Effect of genotype  
+```{r fig.width=7, fig.height=5}
+plot.venn(test.results, c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms"), "Figure 1A")
+```
+
+
+```{r fig.width=7, fig.height=5, results="hide"}
+out.file.panel.A <- "Figure_1A.pdf"
+pdf(file=out.file.panel.A, paper="a4", width=7, height=5, useDingbats=F)
+plot.venn(test.results, c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms"), "Figure 1A")
+dev.off()
+```
+
+```{r results="asis"}
+cat("Saved:", out.file.panel.A)
+rm(out.file.panel.A)
+```
+
+
+### Panel B: Effect of MMS  
+```{r fig.width=7, fig.height=5}
+plot.venn(test.results, c("wt.mms.vs.wt.ctrl", "ko.mms.vs.ko.ctrl"), "Figure 1B")
+```
+
+```{r Save PDF B, fig.width=7, fig.height=5, results="hide"}
+out.file.panel.B <- "Figure_1B.pdf"
+pdf(file=out.file.panel.B, paper="a4", width=7, height=5, useDingbats=F)
+plot.venn(test.results, c("wt.mms.vs.wt.ctrl", "ko.mms.vs.ko.ctrl"), "Figure 1B")
+dev.off()
+```
+
+```{r results="asis"}
+cat("Saved:", out.file.panel.B)
+rm(out.file.panel.B)
+```
+
+## Session info  
+
+<button class="button" onclick="myFunction('DIV_5')">Show/hide session info</button>
+<div id="DIV_5" class="div_default_hide">
+
+```{r SESSION INFO DATE, results="asis"}
+cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
+```
+
+```{r print_session_info, R.options=list(width=70)}
+devtools::session_info()
+```
+</div>
+  
+```{js}
+var divsToHide = document.getElementsByClassName("div_default_hide");
+for(var i = 0; i < divsToHide.length; i++)
+{
+  divsToHide[i].style.display = 'none';
+}
+```

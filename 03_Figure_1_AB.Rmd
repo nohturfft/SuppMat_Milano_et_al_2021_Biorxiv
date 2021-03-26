@@ -43,7 +43,6 @@ cat("\014")
 ```{r LOAD PACKAGES, results="hide"}
 library(magrittr)
 library(dplyr)
-library(limma)
 ```
 
 

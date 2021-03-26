@@ -152,6 +152,15 @@ fit2 <- limma::eBayes(fit2)
 details::details(fit2, lang=NULL, summary="Show results of limma::eBayes")
 ```
 
+### Save statistics  
+```{r}
+out.file.fit <- paste0("./data/", this.script, ".fit.RDS")
+saveRDS(object=fit2, file=out.file.fit, compress = TRUE)
+cat("Saved:", out.file.fit)
+rm(out.file.fit)
+```
+
+
 ## Number of differentially expressed genes: 'global' versus 'separate' methods  
 The `limma::decideTests` function identifies "which genes are significantly differentially expressed for each contrast from a fit object containing p-values and test statistics."  
 

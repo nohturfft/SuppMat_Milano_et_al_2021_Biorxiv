@@ -271,19 +271,20 @@ plot.par <- list(
   y.max = max(c(-log10(tt$wt.mms.vs.wt.ctrl$adj.P.Val), -log10(tt$wt.mms.vs.wt.ctrl$adj.P.Val))),
   highlight.colors = c("#cc1d6f", RColorBrewer::brewer.pal(9, "Set1")),
   dot.sizes = c(0.8, 0.8, 1.2, 1.2),
-  alphas = rep(0.6, 4),
+  alphas = rep(1, 4),
   cutoff.fc = log2(1.75),
-  cutoff.adj.p = 0.05
+  cutoff.adj.p = 0.05,
+  colors = c("#caf2a7", "#6fcc1d", "#fcecf3", "#cc1d6f") # 3= "gray70"
 )
 plot.par
 ```
 
 ```{r}
-vp1 <- do.volcano.plot.2(
-  t.table=tt$wt.mms.vs.wt.ctrl,
-  genesets=genesets,
-  my.title="A. Aag Wild-type",
-  my.subtitle="Effect of MMS",
+vp1 <- my.volcano.plot(
+  dafra=tt$wt.mms.vs.wt.ctrl,
+  highlight=genesets,
+  title="C. Aag Wild-type",
+  subtitle="Effect of MMS",
   x.max=plot.par$x.max,
   y.max=plot.par$y.max,
   bar.height=plot.par$bar.height,
@@ -295,13 +296,18 @@ vp1 <- do.volcano.plot.2(
   highlight.colors=plot.par$highlight.colors,
   alphas = plot.par$alphas,
   cutoff.fc = plot.par$cutoff.fc,
-  cutoff.adj.p = plot.par$cutoff.adj.p
+  cutoff.adj.p = plot.par$cutoff.adj.p,
+  colors = plot.par$colors
   )
-vp2 <- do.volcano.plot.2(
-  t.table=tt$ko.mms.vs.ko.ctrl,
-  genesets=genesets,
-  my.title="B. Aag Knockout",
-  my.subtitle="Effect of MMS",
+vp1
+```
+
+```{r}
+vp2 <- my.volcano.plot(
+  dafra=tt$ko.mms.vs.ko.ctrl,
+  highlight=genesets,
+  title="D. Aag Knockout",
+  subtitle="Effect of MMS",
   x.max=plot.par$x.max,
   y.max=plot.par$y.max,
   bar.height=plot.par$bar.height,
@@ -313,18 +319,28 @@ vp2 <- do.volcano.plot.2(
   highlight.colors=plot.par$highlight.colors,
   alphas = plot.par$alphas,
   cutoff.fc = plot.par$cutoff.fc,
-  cutoff.adj.p = plot.par$cutoff.adj.p
+  cutoff.adj.p = plot.par$cutoff.adj.p,
+  colors = plot.par$colors
   )
-# vp2
+vp2
+```
+
+
+
+
+```{r}
 gridExtra::grid.arrange(vp1, vp2, nrow=1)
 ```
 
-```{r}
-pdf.file.volcano <- paste0("./output_pdfs/", this.script, ".", gsub("-", "_", Sys.Date()), ".pdf")
-pdf.file.volcano # "volcano_2018_06_24.pdf"
+```{r results="asis"}
+pdf.file.volcano <- "Figure_1_CD.pdf"
 pdf(file=pdf.file.volcano, paper="a4", width=11.3/2.54, height=8/2.54, useDingbats=F)
 gridExtra::grid.arrange(vp1, vp2, nrow=1)
 dev.off()
+```
+
+```{r}
+cat("Saved:", pdf.file.volcano)
 ```
 
 

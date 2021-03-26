@@ -11,7 +11,8 @@ required_cran_packages <- c(
   "DT",
   "RColorBrewer",
   "scales",
-  "devtools"
+  "devtools",
+  "tibble"
 )
 
 required_bioc_packages <- c(

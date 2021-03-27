@@ -14,7 +14,8 @@ required_cran_packages <- c(
   "devtools",
   "tibble",
   "gridExtra",
-  "data.table"
+  "data.table",
+  "openxlsx"
 )
 
 required_bioc_packages <- c(

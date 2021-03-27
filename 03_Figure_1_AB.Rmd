@@ -112,7 +112,7 @@ plot.venn(test.results, c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms"), "Figure 1A"
 
 
 ```{r fig.width=7, fig.height=5, results="hide"}
-out.file.panel.A <- "Figure_1A.pdf"
+out.file.panel.A <- "Figure_1_A.pdf"
 pdf(file=out.file.panel.A, paper="a4", width=7, height=5, useDingbats=F)
 plot.venn(test.results, c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms"), "Figure 1A")
 dev.off()
@@ -130,7 +130,7 @@ plot.venn(test.results, c("wt.mms.vs.wt.ctrl", "ko.mms.vs.ko.ctrl"), "Figure 1B"
 ```
 
 ```{r Save PDF B, fig.width=7, fig.height=5, results="hide"}
-out.file.panel.B <- "Figure_1B.pdf"
+out.file.panel.B <- "Figure_1_B.pdf"
 pdf(file=out.file.panel.B, paper="a4", width=7, height=5, useDingbats=F)
 plot.venn(test.results, c("wt.mms.vs.wt.ctrl", "ko.mms.vs.ko.ctrl"), "Figure 1B")
 dev.off()

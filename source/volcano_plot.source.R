@@ -22,13 +22,6 @@ my.volcano.plot <-
            y.intercept=-0.2,
            y.position="left",
            font.size=10) {
-    # highlight <- genesets
-    # cutoff.fc <- log2(1.75)
-    # cutoff.adj.p = 0.05
-    # colors = c("green", "gray", "blue", "darkred")
-    # dot.sizes = c(1, 1, 2, 2)
-    # alphas = c(1, 1, 1, 1)
-    # dafra <- tt$wt.mms.vs.wt.ctrl
     
     stopifnot("data.frame" %in% class(tt$wt.mms.vs.wt.ctrl))
     stopifnot(nrow(dafra) > 0)
@@ -179,24 +172,3 @@ my.volcano.plot <-
 
     gg.volcano
   }
-
-# debug("my.volcano.plot")
-
-# Wrapper function for volcano plots:
-
-do.volcano.plot.2 <- function(t.table, genesets, my.title, my.subtitle,
-                              highlight.colors, ...) {
-  vp <- my.volcano.plot(
-    dafra=t.table,
-    highlight=genesets,
-    rugs="b",
-    colors = c("#caf2a7", "#6fcc1d", "gray70", highlight.colors[1]),
-    rug.size=0.7,
-    title = my.title,
-    subtitle = my.subtitle,
-    ...
-  )
-  vp
-}
-
-# debug("do.volcano.plot.2")

@@ -15,7 +15,8 @@ required_cran_packages <- c(
   "tibble",
   "gridExtra",
   "data.table",
-  "openxlsx"
+  "openxlsx",
+  "enrichR"
 )
 
 required_bioc_packages <- c(
@@ -30,13 +31,14 @@ required_bioc_packages <- c(
 
 for (cran_pkg in required_cran_packages) {
   if (!cran_pkg %in% installed_packages) {
-    install.packages(pkg, dependencies=TRUE)
+    message(paste("Installing:", cran_pkg))
+    install.packages(cran_pkg, dependencies=TRUE)
   }
 }
 
 for (bioc_pkg in required_bioc_packages) {
   if (!bioc_pkg %in% installed_packages) {
-    install.packages(pkg, dependencies=TRUE)
+    install.packages(bioc_pkg, dependencies=TRUE)
   }
 }
 

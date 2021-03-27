@@ -1,13 +1,43 @@
 h1 {background: purple;color: white;padding: 7px;font-size: large;border-radius: 5px;}
-h2 {color: purple;font-weight: bold;border:1px solid purple;border-radius: 5px;padding: 10px;font-size: medium;}
-h3 {color: purple;font-size: medium;}
+h2 {color: purple;
+    font-weight: bold;
+    border:1px solid purple;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: large;
+}
+
+h3 {color: purple;
+    font-size: medium;
+    font-size: large;
+    border-bottom: 1px solid purple;
+    padding-bottom: 5px;
+    margin-top: 30px;
+}
+
 h4 {color: darkblue;}
 hr {border: 0;
     height: 5px;
     color:purple;
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));}
-    
-.comment_box {
+
+details {
+  font-family: monospace;
+  font-size: small;
+}
+
+details summary {
+  font-family: Sans-Serif;
+  font-weight: medium;
+  font-size: medium;
+}
+
+.txt_output {
+  background-color: #f7f7f7;
+}
+
+
+.comments {
   background:#ffe6ff;
   border:1px solid darkgrey;
   border-radius: 5px;

@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Figure 1: Preparing expression data"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -78,35 +78,64 @@ dt.options <- function(x, align="left") {
 
 ## Load data  
 ### Get Affymetrix CEL files  
-```{r DATA FOLDERS}
-folder.cel <- "~/_Data/Aag/Aag_KO_Liver_Project_2/microarray/microarray_input/cel_files_paper"
-stopifnot(all(file.exists(folder.cel)))
+
+```{r}
+cel.urls <- paste0("ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3172nnn/",
+                     c(
+                       "GSM3172738/suppl/GSM3172738_AA423_WT_Ctrl_1.CEL.gz", 
+                       "GSM3172739/suppl/GSM3172739_AA424_WT_Ctrl_2.CEL.gz", 
+                       "GSM3172740/suppl/GSM3172740_AA425_WT_Ctrl_3.CEL.gz", 
+                       "GSM3172741/suppl/GSM3172741_AA426_AagKO_Ctrl_1.CEL.gz", 
+                       "GSM3172742/suppl/GSM3172742_AA427_AagKO_Ctrl_2.CEL.gz", 
+                       "GSM3172743/suppl/GSM3172743_AA428_AagKO_Ctrl_3.CEL.gz", 
+                       "GSM3172744/suppl/GSM3172744_AA429_WT_MMS_1.CEL.gz", 
+                       "GSM3172745/suppl/GSM3172745_AA430_WT_MMS_2.CEL.gz", 
+                       "GSM3172746/suppl/GSM3172746_AA431_WT_MMS_3.CEL.gz", 
+                       "GSM3172747/suppl/GSM3172747_AA432_AagKO_MMS_1.CEL.gz", 
+                       "GSM3172748/suppl/GSM3172748_AA433_AagKO_MMS_2.CEL.gz", 
+                       "GSM3172749/suppl/GSM3172749_AA434_AagKO_MMS_3.CEL.gz"
+                     ))
 ```
 
-```{r CEL DATA FOLDER, results="asis"}
-details::details(paste0("<tt>", folder.cel, "</tt>"), lang=NULL, summary="Show data folder")
+
+```{r}
+cel.folder <- "cel_files"
+if (!file.exists(cel.folder)) {
+  dir.create(cel.folder)
+}
+cel.files <- list.files(path=cel.folder, pattern = "cel.gz$", ignore.case = TRUE)
+if (!length(cel.files) == 12) {
+  for (cel.url in cel.urls) {
+    dest.file <- paste0("./", cel.folder, "/", basename(cel.url))
+    print(dest.file)
+    download.file(url = cel.url, destfile=dest.file)
+  }
+}
+cel.files <- sort(list.files(path=cel.folder, pattern = "cel.gz$", ignore.case = TRUE, full.names = TRUE))
+stopifnot(length(cel.files) == 12)
 ```
+
 
 ```{r GET NAMES OF CEL FILES, results="asis"}
-file.paths <- list.files(path=folder.cel, pattern=".*\\.CEL", full.names=TRUE)
-details::details(paste("<tt>", paste(sort(basename(file.paths)), collapse="<br\n>"), "</tt>", sep="\n"),
+details::details(paste("<tt>", paste(sort(basename(cel.files)), collapse="<br\n>"), "</tt>", sep="\n"),
                  lang=NULL, summary="Show CEL filenames")
 ```
 
 ### Read CEL files  
 ```{r READ CEL FILES, class.output="txt_output"}
-stopifnot(all(file.exists(file.paths)))
-ab <- affy::ReadAffy(filenames=file.paths)
-Biobase::sampleNames(ab) <- basename(file.paths)
+stopifnot(all(file.exists(cel.files)))
+ab <- affy::ReadAffy(filenames=cel.files)
+Biobase::sampleNames(ab) <- basename(cel.files)
 cat("Size of ", class(ab), ": ", utils:::format.object_size(pryr::object_size(ab), "auto"), sep="") # 81.8 Mb
 ```
+
 
 ```{r PRINT AFFYBATCH INFO, warning=FALSE}
 print(ab)
 ```
 
 ```{r REMOVE OBSOLETE VARIABLES}
-rm(file.paths, folder.cel)
+rm(cel.files, cel.folder)
 ```
 
 
@@ -118,14 +147,27 @@ pd <- data.frame(sample.name = Biobase::sampleNames(ab),
                  stringsAsFactors = F)
 pd$Genotype <- ifelse(grepl("WT", pd$sample.name, ignore.case=T), "wt", "ko")
 stopifnot(all(complete.cases(pd)))
-pd$Replicate <- stringr::str_extract(pd$sample.name, "[0-9].CEL$") %>% stringr::str_extract(., "^[0-9]")
+pd$Replicate <- stringr::str_extract(pd$sample.name, "[0-9].CEL.*$") %>% stringr::str_extract(., "^[0-9]")
 pd$Treatment <- ifelse(grepl("Ctrl", pd$sample.name, ignore.case=T), "ctrl", "mms")
-rownames(pd) <- pd$sample.name %>% sub("^AA[0-9]{3}_", "", .) %>% sub("^Mpg", "", .) %>% sub(".CEL$", "", .)
+rownames(pd) <- pd$sample.name %>% sub("^.*AA[0-9]{3}_", "", .) %>% sub(".CEL.*$", "", .) %>% sub("^Aag", "", .)
+
 pd <- pd %>% dplyr::select(-sample.name)
 pd %>% 
-  tibble::rownames_to_column("Row Label") %>% 
-  DT::datatable(., options = dt.options(.), rownames = F)
+  tibble::rownames_to_column("Row Label")
+dput(row.names(pd))
 ```
+
+```{r}
+# Check row names:
+expected.row.names <- c("WT_Ctrl_1", "WT_Ctrl_2", "WT_Ctrl_3", "KO_Ctrl_1", "KO_Ctrl_2", 
+"KO_Ctrl_3", "WT_MMS_1", "WT_MMS_2", "WT_MMS_3", "KO_MMS_1", 
+"KO_MMS_2", "KO_MMS_3")
+
+if (!all(expected.row.names %in% row.names(pd))) {
+  stop("Problem with row labels. Later code relies on correct row names as listed in this chunk.")
+}
+```
+
 
 ### Define varLabels  
 ```{r}
@@ -163,6 +205,8 @@ Biobase::pData(ab) %>%
   tibble::rownames_to_column("Row label") %>% 
   DT::datatable(., options = dt.options(.), rownames = F)
 ```
+
+
 ### Save affybatch  
 ```{r SAVE AFFYBATCH, class.output="txt_output"}
 if (!file.exists("data")) {
@@ -173,6 +217,7 @@ saveRDS(ab, file=out.file.affybatch, compress=T)
 cat("Saved:", out.file.affybatch)
 rm(out.file.affybatch)
 ```
+
 
 ## Generate expression set  
 Following instructions in affy vignette (see Info/affy_vignette_2017_04_24.pdf). *"The function expresso performs the steps background correction, normalization, probe specic correction, and summary value computation."* ([Gautier et al., 2004](https://www.ncbi.nlm.nih.gov/pubmed/14960456)).    

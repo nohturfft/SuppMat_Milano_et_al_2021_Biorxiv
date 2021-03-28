@@ -77,7 +77,7 @@ rm(x)
 ```
 
 <div class='comments'>
-The following count values will differ slightly from those in Figure (A and B) because those in Figure 1 represent to probes; values below are based on gene symbols, and many probes map to multiple gene symbols.
+The following count values will differ slightly from those in Figure 1 (A and B) because those in Figure 1 represent microarray probes; however, the values shown below are based on gene symbols, and many probes map to multiple gene symbols.
 </div>
 
 ### Show differentially regulated gene counts  
@@ -94,7 +94,13 @@ g.lists <- lapply(seq_along(test.results.genes), function(i) {
   names(list.i) <- paste(name.i, names(list.i), sep="_")
   list.i
 }) %>% purrr::flatten(.)
-str(g.lists)
+```
+
+
+```{r results="asis"}
+x <- paste(utils::capture.output(str(g.lists)), collapse="<br>\n", sep="")
+details::details(x, summary="Show summary of gene list object", lang=NULL)
+rm(x)
 ```
 
 
@@ -103,7 +109,7 @@ str(g.lists)
 ```{r class.output="txt_output"}
 enrichr.libs.df <- listEnrichrDbs()
 lib.count <- nrow(enrichr.libs.df)
-cat("Number of available libraries:", lib.count)
+cat("Number of available enrichr libraries:", lib.count)
 ```
 
 
@@ -111,7 +117,7 @@ cat("Number of available libraries:", lib.count)
 # help(package="enrichR")
 enrichr.libs.df %>% 
   dplyr::select(libraryName, numTerms) %>% 
-  DT::datatable(., escape=FALSE, rownames = FALSE)
+  DT::datatable(., escape=FALSE, rownames = FALSE, caption="All enrichr libraries:")
 ```
 
 ### Select subset of enrichr libraries to search  
@@ -135,13 +141,15 @@ libs.omit <- c("BioCarta_2013", "BioCarta_2015", "ChEA_2013", "ChEA_2015",
                )
 ```
 
-```{r class_output="txt_output"}
+
+```{r class.output="txt_output"}
 libs.select.df <- enrichr.libs.df %>% 
   dplyr::filter(! libraryName %in% libs.omit)
 cat("Number of libraries selected:", nrow(libs.select.df))
 ```
 
-```{r}
+
+```{r class.output="txt_output"}
 geneset.count <- sum(libs.select.df$numTerms)
 cat("Total number of library genesets:", scales::comma(geneset.count))
 ```
@@ -157,12 +165,13 @@ dummy.df
 ```
 
 
-
-```{r}
+### Perform enrichment analysis  
+```{r class.output="txt_output"}
 cutoff.adj.p <- 1e-06
 dbs <- libs.select.df$libraryName
 # dbs <- c("GO_Molecular_Function_2018", "GO_Cellular_Component_2018",
 #          "GO_Biological_Process_2018")
+cat("Adjusted p-value cutoff:", cutoff.adj.p)
 ```
 
 
@@ -172,7 +181,7 @@ dbs <- libs.select.df$libraryName
 # List names are dbs values (Library names).
 
 do.enrichr <- function(gs, dbs, cutoff.p) {
-  a <- enrichr(gs, dbs)
+  a <- enrichr(gs, dbs) # generates list of data frames
   b <- lapply(seq_along(a), function(i, cutoff.p) {
     df1 <- a[[i]]
     if (nrow(df1) > 0) {
@@ -194,13 +203,9 @@ do.enrichr <- function(gs, dbs, cutoff.p) {
     dplyr::rename(Adj.P.val = Adjusted.P.value) %>% 
     dplyr::distinct(.)
   
-  if (any(!is.na(b$Term))) {
-    b <- b[complete.cases(b),]
-  }
-  
   if (sum(complete.cases(b)) > 0) {
     b <- b[complete.cases(b),] %>% 
-      dplyr::arrange(b, Adj.P.val)
+      dplyr::arrange(., Adj.P.val)
   }
   
   b
@@ -208,7 +213,7 @@ do.enrichr <- function(gs, dbs, cutoff.p) {
 ```
 
 
-```{r include=FALSE, class_output="txt_output"}
+```{r include=FALSE, }
 # Code below generates list object.
 # Each list item to correspond to one of the gene list items in 'g.lists'.
 # Each list item a data frame with enrichment data for multiple enrichr 
@@ -219,27 +224,31 @@ enriched.list <- lapply(seq_along(g.lists), function(i, cutoff.adj.p, dbs) {
   do.enrichr(gs=genes.i, dbs, cutoff.p=cutoff.adj.p)
 }, cutoff.adj.p=cutoff.adj.p, dbs=dbs) %>% 
   set_names(names(g.lists))
-out.file.rds <- paste0("./data/", this.script, "enriched.RDS")
+out.file.rds <- paste0("./data/", this.script, ".enrichr.RDS")
 saveRDS(enriched.list, file=out.file.rds)
-cat("File saved:", out.file.rds)
 ```
 
-```{r}
-str(enriched.list)
-sapply(enriched.list, class)
-sapply(enriched.list, nrow)
-enriched.list[[4]]
-names(enriched.list)
-names(g.lists)
+
+```{r save RDS, class.output="txt_output"}
+cat("File saved:", out.file.rds)
+rm(out.file.rds)
+```
+
+
+```{r results="asis"}
+x <- paste(utils::capture.output(str(enriched.list)), collapse="<br>\n", sep="")
+details::details(x, summary="Show summary of 'enriched.list' object", lang=NULL)
+rm(x)
 ```
 
 
 ### Save in Excel file  
 ```{r Excel parameters}
 xlsx.file <- "Supplemental_Table_2.xlsx"
-tab.colors <- c("paleturquoise4", "chartreuse2", "blue", "palevioletred", "green", "red", "black", "purple", "yellow")
+tab.colors <- c("paleturquoise4", "chartreuse2", "blue", "palevioletred",
+                "green", "red", "black", "purple", "yellow")
 col.indx <- 1:9
-col.widths <- c(100, 20, 20, 20, 17.7, 7.8, 8.3, 9.3, 254)
+col.widths <- c(50, 50, 12, 12, 12, 12, 254)
 ```
 
 ```{r create Excel workbook}
@@ -247,11 +256,31 @@ wb <- openxlsx::createWorkbook()
 openxlsx::modifyBaseFont(wb, fontSize = 12, fontName = "Arial")
 ```
 
-```{r Save differentially expressed genes on first sheet}
+```{r Save analysis info}
+info <- data.frame(
+  Info=c(
+    paste("# Date:", as.character(Sys.time())),
+    "# Adjusted p-value cutoff limma: 0.05",
+    "# log2FC cutoff limma: log2(1.75)",
+    "# Adjusted p-value cutoff enrichment analysis: 1e-06",
+    paste("#", R.version.string),
+    paste("# Platform:", utils::sessionInfo()$platform),
+    paste("# Script:", this.script),
+    paste("# Script repository: https://github.com/nohturfft/SuppMat_Milano_et_al_2021_Biorxiv")
+  )
+)
+openxlsx::addWorksheet(wb = wb, sheetName = "Info", gridLines = FALSE, tabColour="yellow")
+openxlsx::setColWidths(wb = wb, sheet = "Info", cols = 1, widths = 50)
+openxlsx::writeData(wb=wb, sheet="Info", x=info, xy=c("A", 1))
+```
+
+
+```{r Save differentially expressed gene symbol on first sheet}
 genes.sheet <- "Genes"
 openxlsx::addWorksheet(wb = wb, sheetName = genes.sheet, gridLines = FALSE, tabColour="orange")
 openxlsx::setColWidths(wb = wb, sheet = genes.sheet, cols = seq_len(length(g.lists)), widths = 20)
-openxlsx::writeData(wb=wb, sheet=genes.sheet, x="Differentially regulated genes (log2FC >= 1.75; pFDR <= 0.05)", xy=c("A", 1))
+openxlsx::writeData(wb=wb, sheet=genes.sheet,
+                    x="Differentially regulated genes (log2FC >= 1.75; pFDR <= 0.05)", xy=c("A", 1))
 
 for (i in seq_along(g.lists)) {
   df <- as.data.frame(g.lists[[i]]) %>% magrittr::set_colnames(names(g.lists)[i])
@@ -261,28 +290,33 @@ for (i in seq_along(g.lists)) {
 
 
 ```{r Save GSEA data}
-for (i in seq_along(enriched)) {
-  curr.sheet <- names(enriched)[i]
+for (i in seq_along(enriched.list)) {
+  curr.sheet <- names(enriched.list)[i]
   # Create new worksheet:
-  openxlsx::addWorksheet(wb = wb, sheetName = curr.sheet, gridLines = FALSE, tabColour=tab.colors[i])
+  openxlsx::addWorksheet(wb = wb, sheetName = curr.sheet,
+                         gridLines = FALSE, tabColour=tab.colors[i])
   # Set column widths:
-  openxlsx::setColWidths(wb = wb, sheet = curr.sheet, cols = col.indx, widths = col.widths)
+  openxlsx::setColWidths(wb = wb, sheet = curr.sheet,
+                         cols = col.indx, widths = col.widths)
   # Print geneset name
   openxlsx::writeData(wb=wb, sheet=curr.sheet, x=paste("#", curr.sheet), xy=c("A", 1))
   # Print number of input genes
   openxlsx::writeData(wb=wb, sheet=curr.sheet,
-                      x=paste("# Number of input genes:", length(g.lists[[curr.sheet]])), xy=c("A", 2))
+                      x=paste("# Number of input genes:", length(g.lists[[curr.sheet]])),
+                      xy=c("A", 2))
   # Print number of enrichr hits:
   openxlsx::writeData(wb=wb, sheet=curr.sheet,
-                      x=paste("# Number of enrichr hits:", sum(complete.cases(enriched[[i]]))), xy=c("A", 3))
+                      x=paste("# Number of enrichr hits:", sum(complete.cases(enriched.list[[i]]))),
+                      xy=c("A", 3))
   # Print results table:
-  if (sum(complete.cases(enriched[[i]])) > 0) {
-    openxlsx::writeDataTable(wb = wb, sheet = curr.sheet, x = enriched[[i]], colNames = TRUE, , xy=c("A", 5))
+  if (sum(complete.cases(enriched.list[[i]])) > 0) {
+    openxlsx::writeDataTable(wb = wb, sheet = curr.sheet, x = enriched.list[[i]], colNames = TRUE,
+                             xy=c("A", 5))
   }
 }
 ```
 
-```{r save info, class_output="txt_output"}
+```{r save info, class.output="txt_output"}
 openxlsx::saveWorkbook(wb, xlsx.file, overwrite = TRUE)
 cat("Saved:", xlsx.file)
 ```

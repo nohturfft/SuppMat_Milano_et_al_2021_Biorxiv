@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Figure 1 C and D"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -50,10 +50,6 @@ cat("\014")
 library(magrittr)
 library(dplyr)
 library(ggplot2)
-# library(openxlsx)
-# library(mouse430a2.db)
-# library(limma)
-# library(gridExtra)
 ```
 
 
@@ -65,7 +61,7 @@ cat("Script:", this.script)
 ## Load data  
 ### Load toptables generated in previous script:  
 ```{r results="hide"}
-xlsx.file <- "Supplemental_Table_1.xlsx"
+xlsx.file <- "Supplemental_Data_1.xlsx"
 stopifnot(file.exists(xlsx.file))
 sheet.names <- openxlsx::getSheetNames(xlsx.file)
 tt <- lapply(sheet.names, function(s.name) {

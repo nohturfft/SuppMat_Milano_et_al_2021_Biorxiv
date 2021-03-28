@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Supplemtal Table 1"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -51,7 +51,7 @@ library(mouse430a2.db)
 ```
 
 
-```{r, SCRIPT INFO}
+```{r, SCRIPT INFO, class.output="txt_output"}
 this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
 stopifnot(this.script != "")
 cat("Script:", this.script)
@@ -77,7 +77,7 @@ dt.options <- function(x, align="left") {
 Script expects that input data have been generated in previous script.  
 
 ### Load expression set  
-```{r LOAD ESET}
+```{r LOAD ESET, class.output="txt_output"}
 # list.files("data")
 eset.file <- "./data/01_Raw_Data_Processing.Rmd.eset.RDS"
 stopifnot(file.exists(eset.file))
@@ -113,22 +113,19 @@ TS <- factor(TS, levels=c("wt.ctrl","wt.mms","ko.ctrl","ko.mms"))
 TS
 ```
 
-<button class="button" onclick="myFunction('DIV_1')">Show/hide model matrix</button>
-<div id="DIV_1" class="div_default_hide">
-```{r MODEL MATRIX, results="asis"}
+
+```{r MODEL MATRIX, results="hide"}
 design <- model.matrix(~0+TS)
 colnames(design) <- levels(TS)
 design
 ```
-</div>
 
 ### Fitting linear model  
-```{r LINEAR MODEL}
+```{r LINEAR MODELclass, class.output="txt_output"}
 fit <- Biobase::exprs(eset) %>% 
   log2(.) %>% 
   limma::lmFit(., design)
-cat("Object class:\n")
-class(fit)
+cat("Object class:", class(fit))
 ```
 
 
@@ -153,7 +150,7 @@ details::details(fit2, lang=NULL, summary="Show results of limma::eBayes")
 ```
 
 ### Save statistics  
-```{r warning=FALSE, message=FALSE}
+```{r warning=FALSE, message=FALSE, class.output="txt_output"}
 out.file.fit <- paste0("./data/", this.script, ".fit.RDS")
 saveRDS(object=fit2, file=out.file.fit, compress = TRUE)
 cat("Saved:", out.file.fit)
@@ -167,19 +164,19 @@ The `limma::decideTests` function identifies "which genes are significantly diff
 "The setting method="separate" is equivalent to using topTable separately for each coefficient in the linear model fit, and will identify the same probes as significantly differentially expressed if adjust.method is the same. method="global" will treat the entire matrix of t-statistics as a single vector of unrelated tests." [...] 
 
 ### Regulation parameters (cutoffs log2FC & p.value):  
-```{r P_CUTOFF, results="asis"}
+```{r P_CUTOFF, class.output="txt_output"}
 p.cutoff <- 0.05
-cat("Maximum p value:<b>", p.cutoff, "</b>")
+cat("Maximum p value:", p.cutoff)
 ```
 
-```{r LOGFC_CUTOFF, results="asis"}
+```{r LOGFC_CUTOFF, class.output="txt_output"}
 fc.min <- 1.75
 lfc.min <- log2(fc.min)
-cat("Minimum log2FC:<b>", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)), "</b>")
+cat("Minimum log2FC:", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)))
 ```
 
 ### DecideTests  
-```{r}
+```{r class.output="txt_output"}
 test.results <- limma::decideTests(fit2, p.value = p.cutoff, lfc=lfc.min,
                                   method = "separate", adjust.method="fdr")
 ```
@@ -224,7 +221,7 @@ str(test.results.probes)
 
 
 ### Save probe lists  
-```{r}
+```{r class.output="txt_output"}
 out.file.probe.lists <- paste0("./data/", this.script, ".DEprobes.RDS")
 saveRDS(object=test.results.probes, file=out.file.probe.lists)
 cat("Saved:", out.file.probe.lists)
@@ -261,7 +258,7 @@ lapply(test.results.genes, function(gs) {
 ```
 
 #### Save gene lists  
-```{r}
+```{r class.output="txt_output"}
 out.file.gene.lists <- paste0("./data/", this.script, ".DEgenes.RDS")
 saveRDS(object=test.results.genes, file=out.file.gene.lists)
 cat("Saved:", out.file.gene.lists)
@@ -270,9 +267,10 @@ rm(out.file.gene.lists)
 
 
 ## Toptables  
-```
-NOTE: After annotating the toptables with gene symbols, the number of differentially regulated items increases because some probeset IDs map to several gene symbols.
-```
+
+<div class="comments">
+**NOTE:** After annotating the toptables with gene symbols, the number of differentially regulated items increases because some probeset IDs map to several gene symbols.
+</div>
 
 ### Annotate probe sets with gene symbol and gene title:  
 ```{r}
@@ -305,7 +303,7 @@ tt <- lapply(coefs, function(coeff) {
 NOTE: Many probe IDs map to several gene symbols:  
 ```
 
-```{r results="asis"}
+```{r class.output="txt_output"}
 cat("Rows in eset:", scales::comma(nrow(eset)))
 ```
 
@@ -317,7 +315,7 @@ sapply(tt, nrow) %>% scales::comma(.) %>%
 ```
 
 ### Save toptables in Excel file  
-```{r results="asis"}
+```{r class.output="txt_output"}
 xlsx.file <- "Supplemental_Data_1.xlsx"
 wb <- openxlsx::createWorkbook()
 openxlsx::modifyBaseFont(wb, fontSize = 12, fontName = "Arial")
@@ -337,8 +335,8 @@ rm(xlsx.file, wb, tab.colors, i, sheet.name)
 
 ## Session info  
 
-<button class="button" onclick="myFunction('DIV_2')">Show/hide session info</button>
-<div id="DIV_2" class="div_default_hide">
+<button class="button" onclick="myFunction('DIV_1')">Show/hide session info</button>
+<div id="DIV_1" class="div_default_hide">
 
 ```{r SESSION INFO DATE, results="asis"}
 cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
@@ -348,11 +346,11 @@ cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")
 devtools::session_info()
 ```
 </div>
-  
+
 ```{js}
 var divsToHide = document.getElementsByClassName("div_default_hide");
 for(var i = 0; i < divsToHide.length; i++)
 {
-  divsToHide[i].style.display = 'none';
+divsToHide[i].style.display = 'none';
 }
 ```

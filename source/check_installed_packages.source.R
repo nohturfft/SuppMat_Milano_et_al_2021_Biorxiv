@@ -18,7 +18,8 @@ required_cran_packages <- c(
   "openxlsx",
   "enrichR",
   "gplots",
-  "Hmisc"
+  "Hmisc",
+  "superheat"
 )
 
 required_bioc_packages <- c(

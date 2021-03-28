@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Figure S1"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -152,7 +152,7 @@ rm(x)
 ### Load toptables  
 ```{r Read toptables, class.output="txt_output"}
 # list.files()
-tt.file <- "Supplemental_Table_1.xlsx"
+tt.file <- "Supplemental_Data_1.xlsx"
 stopifnot(file.exists(tt.file))
 tt.sheet.names <- openxlsx::getSheetNames(tt.file)
 # tt.sheet.names

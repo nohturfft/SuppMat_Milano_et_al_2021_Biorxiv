@@ -318,7 +318,7 @@ sapply(tt, nrow) %>% scales::comma(.) %>%
 
 ### Save toptables in Excel file  
 ```{r results="asis"}
-xlsx.file <- "Supplemental_Table_1.xlsx"
+xlsx.file <- "Supplemental_Data_1.xlsx"
 wb <- openxlsx::createWorkbook()
 openxlsx::modifyBaseFont(wb, fontSize = 12, fontName = "Arial")
 tab.colors <- c("paleturquoise4", "darkseagreen", "palevioletred", "bisque3")

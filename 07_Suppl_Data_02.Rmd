@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Supplemental Data 2"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -167,7 +167,7 @@ dummy.df
 
 ### Perform enrichment analysis  
 ```{r class.output="txt_output"}
-cutoff.adj.p <- 1e-06
+cutoff.adj.p <- 1e-04
 dbs <- libs.select.df$libraryName
 # dbs <- c("GO_Molecular_Function_2018", "GO_Cellular_Component_2018",
 #          "GO_Biological_Process_2018")

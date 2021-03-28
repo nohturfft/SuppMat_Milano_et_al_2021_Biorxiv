@@ -19,7 +19,8 @@ required_cran_packages <- c(
   "enrichR",
   "gplots",
   "Hmisc",
-  "superheat"
+  "superheat",
+  "plotly"
 )
 
 required_bioc_packages <- c(

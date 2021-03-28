@@ -16,7 +16,6 @@ output:
 ---
 
 ```{js}
-
 function myFunction(id) {
   var x = document.getElementById(id);
   if (x.style.display === 'none') {
@@ -25,16 +24,6 @@ function myFunction(id) {
     x.style.display = 'none';
   }
 }
-```
-
-```{r}
-# h1 {background: darkblue;color: white;padding-left: 7px;}
-# h3 {color: white; background: #4d88ff;}
-# h3.subtitle {color: darkblue; background: white;}
-# h4.author {color: black; font-style: italic;}
-# details summary span {font-weight: bold;}
-# details p {font-family: monospace;}
-# .code-folding-btn {display: none;}
 ```
 
 ## Setup  
@@ -66,7 +55,7 @@ library(mouse430a2.db)
 ```
 
 
-```{r SCRIPT INFO}
+```{r SCRIPT INFO, class.output="txt_output"}
 this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
 stopifnot(this.script != "")
 cat("Script:", this.script)
@@ -105,11 +94,11 @@ details::details(paste("<tt>", paste(sort(basename(file.paths)), collapse="<br\n
 ```
 
 ### Read CEL files  
-```{r READ CEL FILES, results="asis"}
+```{r READ CEL FILES, class.output="txt_output"}
 stopifnot(all(file.exists(file.paths)))
 ab <- affy::ReadAffy(filenames=file.paths)
 Biobase::sampleNames(ab) <- basename(file.paths)
-cat("Size of ", class(ab), ": <b>", utils:::format.object_size(pryr::object_size(ab), "auto"), "</b>\n", sep="") # 81.8 Mb
+cat("Size of ", class(ab), ": ", utils:::format.object_size(pryr::object_size(ab), "auto"), sep="") # 81.8 Mb
 ```
 
 ```{r PRINT AFFYBATCH INFO, warning=FALSE}
@@ -175,7 +164,7 @@ Biobase::pData(ab) %>%
   DT::datatable(., options = dt.options(.), rownames = F)
 ```
 ### Save affybatch  
-```{r SAVE AFFYBATCH}
+```{r SAVE AFFYBATCH, class.output="txt_output"}
 if (!file.exists("data")) {
   dir.create("data")
 }
@@ -198,7 +187,7 @@ eset <- affy::expresso(ab,
 ```
 
 ### Save eset  
-```{r SAVING ESET, results="asis"}
+```{r SAVING ESET, class.output="txt_output"}
 out.file.eset <- paste0("./data/", this.script, ".eset.RDS")  
 saveRDS(eset, file=out.file.eset, compress=TRUE)
 cat("Saved:", out.file.eset)
@@ -226,7 +215,7 @@ head(expr.df)
 
 
 ### Save expression table with all replicates:  
-```{r SAVING MATRIX}
+```{r SAVING MATRIX, class.output="txt_output"}
 out.file.expr.all <- paste0("./data/", this.script, ".expr_all.txt")
 write.table(expr.df, file=out.file.expr.all, sep="\t", col.names = T, row.names = F)
 cat("Saved:", out.file.expr.all)
@@ -270,8 +259,11 @@ rm(anno)
 ```{r}
 head(expr.df.means.anno)
 ```
-***Note that probe IDs and gene symbols are no longer unique after adding gene annotations!***
-```{r}
+<div class="comments">
+*Note that probe IDs and gene symbols are no longer unique after adding gene annotations!*
+</div>
+
+```{r class.output="txt_output"}
 cat("Number of duplicated probe IDs: ", comma(sum(duplicated(expr.df.means.anno$PROBEID))), "\n",
     "Number of duplicated gene symbols: ", comma(sum(duplicated(expr.df.means.anno$SYMBOL))), "\n",
     "Number of missing probe IDs: ", comma(sum(is.na(expr.df.means.anno$PROBEID))), "\n",
@@ -281,7 +273,7 @@ cat("Number of duplicated probe IDs: ", comma(sum(duplicated(expr.df.means.anno$
 
 
 ### Save average expression data  
-```{r}
+```{r class.output="txt_output"}
 out.file.expr.all <- paste0("./data/", this.script, ".expr_mean.txt")
 write.table(expr.df.means.anno, file=out.file.expr.all, sep="\t", row.names=FALSE, col.names=TRUE)
 cat("Saved:", out.file.expr.all)
@@ -304,9 +296,9 @@ devtools::session_info()
 </div>
 
 ```{js}
-<!-- var divsToHide = document.getElementsByClassName("div_default_hide"); -->
-<!-- for(var i = 0; i < divsToHide.length; i++) -->
-<!-- { -->
-  <!-- divsToHide[i].style.display = 'none'; -->
-<!-- } -->
+var divsToHide = document.getElementsByClassName("div_default_hide");
+for(var i = 0; i < divsToHide.length; i++)
+{
+divsToHide[i].style.display = 'none';
+}
 ```

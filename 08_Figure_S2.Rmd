@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Supplemental Figure S2"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -59,11 +59,7 @@ cat("\014")
 library(magrittr)
 library(dplyr)
 library(openxlsx)
-# library(AnnotationDbi)
-# library(org.Mm.eg.db)
-# library(hgu133plus2.db)
 library(Hmisc)
-# library(gplots)
 ```
 
  
@@ -77,7 +73,7 @@ cat(cat("Script:", this.script))
 ### Load enrichment data  
 ```{r class.output="txt_output"}
 # list.files()
-enriched.xlsx.file <- "Supplemental_Table_2.xlsx"
+enriched.xlsx.file <- "Supplemental_Data_2.xlsx"
 the.sheet <- "wt.mms.vs.wt.ctrl_up"
 stopifnot(file.exists(enriched.xlsx.file))
 enriched.wt.up <- openxlsx::read.xlsx(xlsxFile = enriched.xlsx.file,
@@ -298,7 +294,7 @@ gene.counts.df <- table(unlist(aggr.gene.list)) %>%
 table(gene.counts.df$Count)
 ```
 
-```{r output.class="txt_output"}
+```{r class.output="txt_output"}
 genes.select <- subset(gene.counts.df , Count >= 3) %>% .[,"Gene"]
 cat("Number of genes selected:", length(genes.select))
 ```
@@ -323,6 +319,12 @@ pdf(file=pdf.file, paper="a4", width=7, height=10, pointsize = 6)
 plot.it(mx.select)
 dev.off()
 ```
+
+```{r class.output="txt_output"}
+cat("File saved:", pdf.file)
+rm(pdf.file)
+```
+
 
 <hr>
 

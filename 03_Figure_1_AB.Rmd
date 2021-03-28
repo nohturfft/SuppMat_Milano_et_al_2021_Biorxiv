@@ -1,7 +1,7 @@
 ---
 title: "A novel role for alkyladenine DNA glycosylase in regulating alkylation-induced ER stress"
 subtitle: "Figure 1 A and B"
-author: "L Milano, CF Charlier, R Andreguetti, A Aljohani, E Healing, MP Thomé, R Elliott, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
+author: "L Milano, CF Charlier, R Andreguetti, E Healing, MP Thomé, R Elliott, JY Masson, LD Samson, G Lenz, JAP Henriques, A Nohturfft and LB Meira"
 output:
   html_notebook:
     toc: TRUE
@@ -46,7 +46,7 @@ library(dplyr)
 ```
 
 
-```{r SCRIPT INFO, results="asis"}
+```{r SCRIPT INFO, class.output="txt_output"}
 this.script <- rstudioapi::getActiveDocumentContext()$path %>% basename
 stopifnot(this.script != "")
 cat("Script:", this.script)
@@ -54,7 +54,7 @@ cat("Script:", this.script)
 
 
 ## Load differential expression statistics  
-```{r LOAD FIT, results="asis"}
+```{r LOAD FIT, class.output="txt_output"}
 fit2.file <- "./data/02_Suppl_Table_01.Rmd.fit.RDS"
 stopifnot(file.exists(fit2.file))
 cat("Read fit2 from:", fit2.file)
@@ -71,15 +71,15 @@ cat("Object class: ", class(fit2)[1], "<br>\n",
 
 ## Multiple testing  
 ### Regulation parameters (cutoffs FC & p.value):  
-```{r P_CUTOFF, results="asis"}
+```{r P_CUTOFF, class.output="txt_output"}
 p.cutoff <- 0.05
-cat("Maximum p value:<b>", p.cutoff, "</b>")
+cat("Maximum p value:", p.cutoff)
 ```
 
-```{r LOGFC_CUTOFF, results="asis"}
+```{r LOGFC_CUTOFF, class.output="txt_output"}
 fc.min <- 1.75
 lfc.min <- log2(fc.min)
-cat("Minimum log2FC:<b>", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)), "</b>")
+cat("Minimum log2FC:", paste0("log2(", fc.min, ") = ", round(lfc.min, 3)))
 ```
 
 ### DecideTests  
@@ -118,7 +118,7 @@ plot.venn(test.results, c("ko.ctrl.vs.wt.ctrl", "ko.mms.vs.wt.mms"), "Figure 1A"
 dev.off()
 ```
 
-```{r results="asis"}
+```{r class.output="txt_output"}
 cat("Saved:", out.file.panel.A)
 rm(out.file.panel.A)
 ```
@@ -136,15 +136,15 @@ plot.venn(test.results, c("wt.mms.vs.wt.ctrl", "ko.mms.vs.ko.ctrl"), "Figure 1B"
 dev.off()
 ```
 
-```{r results="asis"}
+```{r class.output="txt_output"}
 cat("Saved:", out.file.panel.B)
 rm(out.file.panel.B)
 ```
 
 ## Session info  
 
-<button class="button" onclick="myFunction('DIV_5')">Show/hide session info</button>
-<div id="DIV_5" class="div_default_hide">
+<button class="button" onclick="myFunction('DIV_1')">Show/hide session info</button>
+<div id="DIV_1" class="div_default_hide">
 
 ```{r SESSION INFO DATE, results="asis"}
 cat("Date:", format(Sys.time(), "%a %d-%b-%Y %H:%M:%S"), "<br>\n")

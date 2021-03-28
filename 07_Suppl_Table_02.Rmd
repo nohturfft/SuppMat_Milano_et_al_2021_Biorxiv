@@ -244,7 +244,7 @@ rm(x)
 
 ### Save in Excel file  
 ```{r Excel parameters}
-xlsx.file <- "Supplemental_Table_2.xlsx"
+xlsx.file <- "Supplemental_Data_2.xlsx"
 tab.colors <- c("paleturquoise4", "chartreuse2", "blue", "palevioletred",
                 "green", "red", "black", "purple", "yellow")
 col.indx <- 1:9

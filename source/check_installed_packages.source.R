@@ -16,7 +16,9 @@ required_cran_packages <- c(
   "gridExtra",
   "data.table",
   "openxlsx",
-  "enrichR"
+  "enrichR",
+  "gplots",
+  "Hmisc"
 )
 
 required_bioc_packages <- c(
@@ -38,7 +40,7 @@ for (cran_pkg in required_cran_packages) {
 
 for (bioc_pkg in required_bioc_packages) {
   if (!bioc_pkg %in% installed_packages) {
-    install.packages(bioc_pkg, dependencies=TRUE)
+    BiocManager::install(bioc_pkg, dependencies=TRUE)
   }
 }
 

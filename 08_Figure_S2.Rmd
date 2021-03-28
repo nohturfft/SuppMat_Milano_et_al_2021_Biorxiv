@@ -278,7 +278,7 @@ mx[1:4, 1:6]
 ## Heatmap: all genes
 ```{r}
 gplots::heatmap.2(x=t(mx), distfun= function(c) dist(c, method="manhattan"), trace="none", key=F,
-                  col=c("grey", "black"))
+                  col=c("grey90", "black"))
 ```
 
 
@@ -311,8 +311,8 @@ mx.select <- mx[genes.select, ]
 
 ```{r}
 plot.it <- function(mtrx) {
-  gplots::heatmap.2(x=mtrx, distfun= function(c) dist(c, method="manhattan"), trace="none", key=F,
-                  col=c("grey", "black"))
+  gplots::heatmap.2(x=mtrx, distfun= function(c) dist(c, method="binary"), trace="none", key=F,
+                  col=c("grey90", "black"))
 }
 plot.it(mx.select)
 ```

@@ -20,7 +20,9 @@ The repository includes 8 rmarkdown (.Rmd) scripts that generate the following m
 * Supplemental_Data_1.xlsx  
 * Supplemental_Data_2.xlsx  
 
-The rmarkdown scripts generate reports in [html notebook](https://rmarkdown.rstudio.com/r_notebook_format.html) (.nb.html) format that can be viewed in a web browser. Pre-compiled html notebooks generated during development are stored in the `html_notebooks` folder, and they include documentation on the versions of R and R packages used. Html notebooks files include the R code that was used to generate them; the code can be extracted from a dropdown menu in the top right corner of each file.  
+Scripts must be run in the order as numbered as intermediate data files are generated that serve as input to later scripts.  
+
+The rmarkdown scripts generate reports in [html notebook](https://rmarkdown.rstudio.com/r_notebook_format.html) (.nb.html) format that can be viewed in a web browser. Pre-compiled html notebooks generated during development are stored in the `html_notebooks` folder, and they include documentation on the versions of R and R packages used (see 'Session info' sections).  
 
 ## Issues  
 If you notice any problems with the analyses, please raise an issue on Github.  
